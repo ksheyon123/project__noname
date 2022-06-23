@@ -27,6 +27,7 @@
     "css-minimizer-webpack-plugin": "^3.2.0",
     "dotenv": "^10.0.0",
     "dotenv-expand": "^5.1.0",
+    "electron": "^19.0.6",
     "eslint": "^8.3.0",
     "eslint-config-react-app": "^7.0.1",
     "eslint-webpack-plugin": "^3.1.1",
@@ -70,8 +71,12 @@
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "test": "node scripts/test.js"
+    "test": "node scripts/test.js",
+    "react-start": "BROWSER=none npm start",
+    "electron-start": "ELECTRON_START_URL=http://localhost:3000 electron ."
   },
+  "main": "public/main.js",
+  "homepage": "./",
   "eslintConfig": {
     "extends": [
       "react-app",
