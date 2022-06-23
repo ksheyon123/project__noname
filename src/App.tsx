@@ -1,9 +1,11 @@
 import React from 'react';
+import { Routes, Route } from "react-router-dom";
 
-function App() {
+const App = () => {
   return (
-    <>
-    </>
+    <Routes>
+      <Route path="/" element={<></>} />
+    </Routes>
   );
 }
 
