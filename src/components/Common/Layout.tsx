@@ -16,7 +16,7 @@ const StyledLayout = styled.div`
 
   @media screen and (max-width : 800px) {
     width : 800px;
-    height : 628px;
+    height : 600px;
     background-color: blue;
   }
 

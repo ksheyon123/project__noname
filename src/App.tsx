@@ -1,10 +1,10 @@
-import React, { ReactNode, useEffect } from 'react';
-import { useRecoilValue } from "recoil";
+import React, { useEffect } from 'react';
 import { Routes, Route } from "react-router-dom";
 import { Layout } from "src/components/index";
 import { getPrivateKey } from "src/apis/localStorage";
 import { PrivateLoginType } from "src/constants/types";
-import { MainPage } from "src/pages/index";
+import { PATHNAME } from "src/constants/index";
+import { LoginPage, MainPage, CreatorPage } from "src/pages/index";
 
 const PrivateRoute = ({ children, isLoggedIn }: PrivateLoginType) => {
 
@@ -26,14 +26,17 @@ const App = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<></>} />
-
-      <Route path="/main" element={
+      <Route path={PATHNAME.ROOT} element={<LoginPage />} />
+      <Route path={PATHNAME.GAME} element={
         <PrivateRoute isLoggedIn={isLoggedIn}>
           <MainPage />
         </PrivateRoute>
       } />
-
+      <Route path={PATHNAME.NFT} element={
+        <PrivateRoute isLoggedIn={isLoggedIn}>
+          <CreatorPage />
+        </PrivateRoute>
+      } />
     </Routes>
   );
 }
