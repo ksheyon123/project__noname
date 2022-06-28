@@ -17,7 +17,7 @@ const LoginPage: React.FC = () => {
         navigate(PATHNAME.GAME);
       }} />
       <Button name="Go To NFT" handleOnClick={() => {
-        navigate(PATHNAME.NFT);
+        navigate(PATHNAME.LAYOUT);
       }} />
     </StyledLoginPage>
   )

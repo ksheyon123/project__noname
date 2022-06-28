@@ -4,7 +4,7 @@ import { Layout } from "src/components/index";
 import { getPrivateKey } from "src/apis/localStorage";
 import { PrivateLoginType } from "src/constants/types";
 import { PATHNAME } from "src/constants/index";
-import { LoginPage, MainPage, CreatorPage } from "src/pages/index";
+import { LoginPage, MainPage, LayoutPage, CreatorPage } from "src/pages/index";
 
 const PrivateRoute = ({ children, isLoggedIn }: PrivateLoginType) => {
 
@@ -27,16 +27,24 @@ const App = () => {
   return (
     <Routes>
       <Route path={PATHNAME.ROOT} element={<LoginPage />} />
-      <Route path={PATHNAME.GAME} element={
-        <PrivateRoute isLoggedIn={isLoggedIn}>
-          <MainPage />
-        </PrivateRoute>
-      } />
-      <Route path={PATHNAME.NFT} element={
-        <PrivateRoute isLoggedIn={isLoggedIn}>
-          <CreatorPage />
-        </PrivateRoute>
-      } />
+      <Route path={PATHNAME.LAYOUT}
+        element={
+          <PrivateRoute isLoggedIn={isLoggedIn}>
+            <LayoutPage />
+          </PrivateRoute>
+        } />
+      <Route path={PATHNAME.GAME}
+        element={
+          <PrivateRoute isLoggedIn={isLoggedIn}>
+            <MainPage />
+          </PrivateRoute>
+        } />
+      <Route path={PATHNAME.NFT}
+        element={
+          <PrivateRoute isLoggedIn={isLoggedIn}>
+            <CreatorPage />
+          </PrivateRoute>
+        } />
     </Routes>
   );
 }

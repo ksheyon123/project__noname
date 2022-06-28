@@ -1,3 +1,3 @@
 export { Layout } from "./Common/Layout";
 export { Button } from "./Common/Button/Button";
-export { Input } from "./Common/Input/Input";
+export { InputWrapper as Input } from "./Common/Input/InputWrapper"
