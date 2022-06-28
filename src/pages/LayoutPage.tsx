@@ -1,6 +1,5 @@
 import React from "react";
 import styled from "styled-components";
-import Store from "electron-store";
 import { Button } from "src/components/index";
 
 const StyledLayoutPage = styled.div`
@@ -32,8 +31,6 @@ const StyledLayoutPage = styled.div`
 `;
 
 const LayoutPage: React.FC = () => {
-
-  const store = new Store();
 
   return (
     <StyledLayoutPage>
