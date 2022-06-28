@@ -8,6 +8,7 @@ interface IProps {
 }
 
 const StyledInput = styled.input`
+  width : 100%;
   padding : 3px 5px;
   border : none;
   &:focus {
