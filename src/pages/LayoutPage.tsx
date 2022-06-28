@@ -1,10 +1,12 @@
 import React from "react";
 import styled from "styled-components";
+import Store from "electron-store";
 import { Button } from "src/components/index";
 
 const StyledLayoutPage = styled.div`
   & > div.select-size {
     display: grid;
+    align-content : center;
     grid-template-rows: auto;
     grid-template-columns: 1fr 1fr 1fr;
     grid-gap: 10px;
@@ -30,6 +32,9 @@ const StyledLayoutPage = styled.div`
 `;
 
 const LayoutPage: React.FC = () => {
+
+  const store = new Store();
+
   return (
     <StyledLayoutPage>
       <div className="select-size">
