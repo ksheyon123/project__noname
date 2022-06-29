@@ -1,6 +1,7 @@
-import React, { useRef, RefObject, useEffect } from "react";
+import React, { useRef, RefObject, useEffect, useState, useCallback } from "react";
 import styled from "styled-components";
 import { Input } from "src/components/index";
+import { useMountEffect } from "src/hooks/useMountEffect";
 
 interface IProps {
   width?: number;
@@ -31,8 +32,8 @@ const StyledCreatorPage = styled.div<{ width: number; height: number; }>`
     }
   }
   .pixel {
-        border : 0.5px solid rgba(0, 0, 0, 0.03);
-      }
+    border : 0.5px solid rgba(0, 0, 0, 0.1);
+  }
 `;
 
 const CreatorPage: React.FC<IProps> = (props) => {
@@ -41,13 +42,14 @@ const CreatorPage: React.FC<IProps> = (props) => {
     height = 1000,
   } = props;
 
-  const size = 100;
+  const size = 10;
   const containerRef = useRef<HTMLDivElement>();
 
-  useEffect(() => {
+  const drawGrid = () => {
     const { current } = containerRef;
     if (!!current) {
       for (let i = 0; i < height / size; i++) {
+
         const flexEl = document.createElement("div");
         flexEl.style.display = "flex";
 
@@ -58,12 +60,29 @@ const CreatorPage: React.FC<IProps> = (props) => {
           divEl.classList.add("pixel");
           flexEl.appendChild(divEl)
         }
-
         current.appendChild(flexEl);
       }
-
     }
-  }, [containerRef]);
+  };
+
+  useMountEffect(drawGrid);
+  const setColor = (idx: number) => {
+    const pixelEl = document.getElementsByClassName("pixel");
+    if (!!pixelEl) {
+      pixelEl[idx].setAttribute("style", "width : 10px; height : 10px; background-color : red;")
+    }
+  }
+
+  useEffect(() => {
+    const blockCount = width / size;
+    window.addEventListener("mousedown", (e) => {
+      const coordX = Math.floor(e.clientX / size);
+      const coordY = Math.floor((e.clientY - 30) / size);
+      const nth = coordX + (coordY * blockCount);
+      const idx = nth;
+      setColor(idx);
+    })
+  }, []);
 
   return (
     <StyledCreatorPage
