@@ -1,4 +1,4 @@
-import React, { useRef, RefObject, useEffect, useState, useCallback } from "react";
+import React, { useRef, RefObject, useEffect, useState, useCallback, MouseEvent } from "react";
 import styled from "styled-components";
 import { Input } from "src/components/index";
 import { useMountEffect } from "src/hooks/useMountEffect";
@@ -8,10 +8,12 @@ interface IProps {
   height?: number;
 }
 
-const StyledCreatorPage = styled.div<{ width: number; height: number; }>`
+const StyledCreatorPage = styled.div`
   width : 100%;
   height : 100%;
   & > div.wrap-tools {
+    position : fixed;
+    top : 0px;
     display: flex;
     align-items: center;
     width : 100%;
@@ -23,17 +25,25 @@ const StyledCreatorPage = styled.div<{ width: number; height: number; }>`
   }
 
   & > div.wrap-canvas {
-    width : 100%;
-    height : calc(100% - 30px);
-    overflow : scroll;
-    & > div.container {
-      width : ${props => props.width + "px"};
-      height : ${props => props.height + "px"};
+    width : 1000px;
+    height : 1000px;
+    & > div {
+      overflow: hidden;
     }
   }
   .pixel {
     border : 0.5px solid rgba(0, 0, 0, 0.1);
   }
+`;
+
+const StyledCanvas = styled.div<{ width: number; height: number; ratio: number; }>`
+  position :relative;
+  top : 0px;
+  left : 0px;
+  width : ${props => props.width + "px"};
+  height : ${props => props.height + "px"};
+  transform: scale(${props => props.ratio});
+  transform-origin: left top;
 `;
 
 const CreatorPage: React.FC<IProps> = (props) => {
@@ -43,11 +53,24 @@ const CreatorPage: React.FC<IProps> = (props) => {
   } = props;
 
   const size = 10;
-  const containerRef = useRef<HTMLDivElement>();
+  const divRef = useRef<HTMLDivElement>();
+  const canvasCRef = useRef<HTMLDivElement>();
+  const canvasRef = useRef<HTMLDivElement>();
   const [isDraw, setIsDraw] = useState<boolean>(false);
+  const [ratio, setRatio] = useState<number>(1);
+
+  useEffect(() => {
+    const { current } = divRef;
+    if (current) {
+      current.addEventListener("wheel", (e) => {
+        e.preventDefault();
+      })
+    }
+
+  }, []);
 
   const drawGrid = () => {
-    const { current } = containerRef;
+    const { current } = canvasRef;
     if (!!current) {
       for (let i = 0; i < height / size; i++) {
 
@@ -75,13 +98,16 @@ const CreatorPage: React.FC<IProps> = (props) => {
     }
   }
 
-  const handleEl = (e: any) => {
-    const blockCount = width / size;
-    const coordX = Math.floor(e.clientX / size);
-    const coordY = Math.floor((e.clientY - 30) / size);
-    const nth = coordX + (coordY * blockCount);
-    const idx = nth;
-    return idx;
+  const handleEl = (e: MouseEventInit) => {
+    if (e.clientX && e.clientY) {
+      const blockCount = width / size;
+      const coordX = Math.floor(e.clientX / size);
+      const coordY = Math.floor((e.clientY - 30) / size);
+      const nth = coordX + (coordY * blockCount);
+      const idx = nth;
+      return idx;
+    }
+    return 0;
   }
 
   const handleOnMouseover = useCallback((e: any) => {
@@ -91,41 +117,65 @@ const CreatorPage: React.FC<IProps> = (props) => {
   }, [isDraw]);
 
   useEffect(() => {
-    window.addEventListener("mousedown", (e) => {
-      handleOnMouseover(e);
-      setIsDraw(true)
-    });
-    return () => window.removeEventListener("mousedown", (e) => {
-      handleOnMouseover(e);
-      setIsDraw(true)
-    });
+    const { current } = canvasRef;
+    if (!!current) {
+      current.addEventListener("mousedown", (e: MouseEventInit) => {
+        handleOnMouseover(e);
+        setIsDraw(true)
+      });
+      return () => current.removeEventListener("mousedown", (e: MouseEventInit) => {
+        handleOnMouseover(e);
+        setIsDraw(true)
+      });
+    }
   }, [isDraw]);
 
   useEffect(() => {
-    window.addEventListener("mouseup", () => setIsDraw(false));
-    return window.removeEventListener("mouseup", () => setIsDraw(false));
+    const { current } = canvasRef;
+    if (!!current) {
+      current.addEventListener("mouseup", () => setIsDraw(false));
+      return current.removeEventListener("mouseup", () => setIsDraw(false));
+    }
+
   }, []);
 
+
   useEffect(() => {
-    const { current } = containerRef;
+    const { current } = canvasRef;
     if (current) {
       current.addEventListener("mouseover", handleOnMouseover);
       return () => current.removeEventListener("mouseover", handleOnMouseover);
     }
   }, [isDraw]);
 
+  useEffect(() => {
+    const { current } = canvasCRef;
+    if (!!current) {
+      current.addEventListener("wheel", (e: WheelEvent) => {
+        if (e.deltaY > 0) {
+          setRatio(ratio - 0.02);
+        }
+
+        if (e.deltaY < 0) {
+          setRatio(ratio + 0.02);
+        }
+      })
+    }
+  }, [ratio]);
   return (
-    <StyledCreatorPage
-      width={width}
-      height={height}
-    >
+    <StyledCreatorPage ref={divRef as RefObject<HTMLDivElement>}>
       <div className="wrap-tools">
 
       </div>
-      <div className="wrap-canvas">
-        <div
-          ref={containerRef as RefObject<HTMLDivElement>}
-          className="container"
+      <div
+        ref={canvasCRef as RefObject<HTMLDivElement>}
+        className="wrap-canvas"
+      >
+        <StyledCanvas
+          ref={canvasRef as RefObject<HTMLDivElement>}
+          width={width}
+          height={height}
+          ratio={ratio}
         />
       </div>
     </StyledCreatorPage>
