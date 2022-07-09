@@ -1,4 +1,6 @@
 const { app, BrowserWindow } = require("electron");
+const path = require("path");
+const isDev = require("electron-is-dev");
 
 function createWindow() {
   /*
@@ -14,16 +16,16 @@ function createWindow() {
   });
 
   /*
-   * ELECTRON_START_URL을 직접 제공할경우 해당 URL을 로드합니다.
-   * 만일 URL을 따로 지정하지 않을경우 (프로덕션빌드) React 앱이
-   * 빌드되는 build 폴더의 index.html 파일을 로드합니다.
-   * */
-  const startUrl = process.env.ELECTRON_START_URL;
-
-  /*
    * startUrl에 배정되는 url을 맨 위에서 생성한 BrowserWindow에서 실행시킵니다.
    * */
-  win.loadURL(startUrl);
+  win.loadURL(
+    isDev
+      ? "http://127.0.0.1:3000"
+      : `file://${path.resolve(__dirname)}/build/index.html`
+  );
+  if (isDev) {
+    win.webContents.openDevTools({ mode: "detach" });
+  }
 }
 
 app.on("ready", createWindow);

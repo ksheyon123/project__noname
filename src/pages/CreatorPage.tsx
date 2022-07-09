@@ -52,10 +52,9 @@ const CreatorPage: React.FC<IProps> = (props) => {
     height = 1000,
   } = props;
 
-  const size = 10;
+  const size = 100;
   const divRef = useRef<HTMLDivElement>();
-  const canvasCRef = useRef<HTMLDivElement>();
-  const canvasRef = useRef<HTMLDivElement>();
+  const canvasRef = useRef<HTMLCanvasElement>();
   const [isDraw, setIsDraw] = useState<boolean>(false);
   const [ratio, setRatio] = useState<number>(1);
 
@@ -71,51 +70,56 @@ const CreatorPage: React.FC<IProps> = (props) => {
 
   const drawGrid = () => {
     const { current } = canvasRef;
-    if (!!current) {
+    const ctx = current?.getContext("2d");
+    if (!!ctx) {
+      // begin draw
+      ctx.lineWidth = 1;
+      ctx.beginPath();
       for (let i = 0; i < height / size; i++) {
-
-        const flexEl = document.createElement("div");
-        flexEl.style.display = "flex";
-        flexEl.className = "row";
-        for (let j = 0; j < width / size; j++) {
-          const divEl = document.createElement("div");
-          divEl.style.width = size + "px";
-          divEl.style.height = size + "px";
-          divEl.classList.add("pixel");
-          flexEl.appendChild(divEl)
-        }
-        current.appendChild(flexEl);
+        ctx.moveTo(i * size, 0);
+        ctx.lineTo(i * size, height);
+        ctx.moveTo(0, i * size);
+        ctx.lineTo(width, i * size);
+        ctx.stroke();
       }
+      ctx.closePath();
     }
   };
 
   useMountEffect(drawGrid);
 
-  const setColor = (idx: number) => {
-    const pixelEl = document.getElementsByClassName("pixel");
-    if (!!pixelEl) {
-      pixelEl[idx].setAttribute("style", "width : 10px; height : 10px; background-color : red;")
+  const getCurrentPosition = useCallback((e: MouseEventInit) => {
+    const { current } = canvasRef;
+    let coordX = 0;
+    let coordY = 0;
+    if (!!e) {
+      const {
+        clientX = 0,
+        clientY = 0
+      } = e;
+      const rect = current!.getBoundingClientRect();
+      coordX = clientX - rect.left;
+      coordY = clientY - rect.top;
+
     }
-  }
+    return {
+      coordX,
+      coordY
+    }
+  }, [canvasRef])
 
   const handleEl = useCallback((e: MouseEventInit) => {
-    console.log(e.clientX);
-    console.log(ratio);
-    if (e.clientX && e.clientY) {
-      const blockCount = width / size;
-      const coordX = Math.floor(e.clientX / size);
-      const coordY = Math.floor(((e.clientY - 30)) / size);
-      const nth = coordX + (coordY * blockCount);
-      const idx = nth;
-      return idx;
-    }
-    return 0;
-  }, [ratio]);
+    const { coordX, coordY } = getCurrentPosition(e);
+    const blockCount = width / size;
+    const xIdx = Math.floor(coordX / size);
+    const yIdx = Math.floor(coordY / size);
+    const idx = xIdx + (yIdx * blockCount);
+    return idx;
+  }, []);
 
   const handleOnMouseover = useCallback((e: any) => {
     if (!isDraw) return;
     const rsp = handleEl(e);
-    setColor(rsp)
   }, [isDraw]);
 
   useEffect(() => {
@@ -161,9 +165,9 @@ const CreatorPage: React.FC<IProps> = (props) => {
   }, [ratio]);
 
   useEffect(() => {
-    const { current } = canvasCRef;
-    current?.addEventListener("wheel", handleOnWheel);
-    return () => current?.removeEventListener("wheel", handleOnWheel);
+    // const { current } = canvasCRef;
+    // current?.addEventListener("wheel", handleOnWheel);
+    // return () => current?.removeEventListener("wheel", handleOnWheel);
   }, [ratio]);
 
   return (
@@ -172,15 +176,12 @@ const CreatorPage: React.FC<IProps> = (props) => {
 
       </div>
       <div
-        ref={canvasCRef as RefObject<HTMLDivElement>}
         className="wrap-canvas"
       >
-        <StyledCanvas
-          id="canvas"
-          ref={canvasRef as RefObject<HTMLDivElement>}
+        <canvas
+          ref={canvasRef as RefObject<HTMLCanvasElement>}
           width={width}
           height={height}
-          ratio={ratio}
         />
       </div>
     </StyledCreatorPage>
