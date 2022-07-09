@@ -36,14 +36,11 @@ const StyledCreatorPage = styled.div`
   }
 `;
 
-const StyledCanvas = styled.div<{ width: number; height: number; ratio: number; }>`
-  position :relative;
-  top : 0px;
-  left : 0px;
-  width : ${props => props.width + "px"};
-  height : ${props => props.height + "px"};
+const StyledCanvas = styled.canvas<{ width: number; height: number; ratio: number; coord: any; }>`
   transform: scale(${props => props.ratio});
-  transform-origin: left top;
+  /* transform-origin: ${props => `
+    ${props.coord.coordX / props.width * 100}% ${props.coord.coordY / props.height * 100}% 
+  `}; */
 `;
 
 const CreatorPage: React.FC<IProps> = (props) => {
@@ -52,11 +49,17 @@ const CreatorPage: React.FC<IProps> = (props) => {
     height = 1000,
   } = props;
 
-  const size = 100;
+  const size = 10;
   const divRef = useRef<HTMLDivElement>();
   const canvasRef = useRef<HTMLCanvasElement>();
   const [isDraw, setIsDraw] = useState<boolean>(false);
   const [ratio, setRatio] = useState<number>(1);
+  const [coord, setCoord] = useState<any>({
+    coordX: 0,
+    coordY: 0
+  })
+
+  let gridData = new Object();
 
   useEffect(() => {
     const { current } = divRef;
@@ -73,8 +76,11 @@ const CreatorPage: React.FC<IProps> = (props) => {
     const ctx = current?.getContext("2d");
     if (!!ctx) {
       // begin draw
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 0.5
+      ctx.strokeStyle = "rgba(230, 230, 230)";
       ctx.beginPath();
+      ctx.rect(0, 0, height, width);
+
       for (let i = 0; i < height / size; i++) {
         ctx.moveTo(i * size, 0);
         ctx.lineTo(i * size, height);
@@ -100,74 +106,82 @@ const CreatorPage: React.FC<IProps> = (props) => {
       const rect = current!.getBoundingClientRect();
       coordX = clientX - rect.left;
       coordY = clientY - rect.top;
-
     }
     return {
       coordX,
       coordY
     }
-  }, [canvasRef])
-
-  const handleEl = useCallback((e: MouseEventInit) => {
-    const { coordX, coordY } = getCurrentPosition(e);
-    const blockCount = width / size;
-    const xIdx = Math.floor(coordX / size);
-    const yIdx = Math.floor(coordY / size);
-    const idx = xIdx + (yIdx * blockCount);
-    return idx;
-  }, []);
+  }, [canvasRef]);
 
   const handleOnMouseover = useCallback((e: any) => {
     if (!isDraw) return;
-    const rsp = handleEl(e);
-  }, [isDraw]);
-
-  useEffect(() => {
-    const { current } = canvasRef;
-    if (!!current) {
-      current.addEventListener("mousedown", (e: MouseEventInit) => {
-        handleOnMouseover(e);
-        setIsDraw(true)
-      });
-      return () => current.removeEventListener("mousedown", (e: MouseEventInit) => {
-        handleOnMouseover(e);
-        setIsDraw(true)
-      });
+    const { coordX, coordY } = getCurrentPosition(e);
+    setCoord({
+      coordX,
+      coordY
+    })
+    const blockCount = width / size;
+    const xIdx = Math.floor((coordX / ratio) / size);
+    const yIdx = Math.floor((coordY / ratio) / size);
+    setColor(xIdx, yIdx);
+    const idx = xIdx + (yIdx * blockCount);
+    console.log(idx);
+    gridData = {
+      ...gridData,
+      [idx]: {
+        r: 0,
+        g: 0,
+        b: 0,
+        h: 0.01,
+      }
     }
-  }, [isDraw]);
+  }, [isDraw, ratio]);
+
+  const setColor = useCallback((x: number, y: number) => {
+    const { current } = canvasRef;
+    if (!!current) {
+      const ctx = current.getContext("2d");
+      console.log(x * size, y * size);
+      if (!!ctx) {
+        ctx.beginPath();
+        ctx.fillStyle = "rgb(100, 100, 100)";
+        ctx.fillRect(x * size, y * size, size, size);
+        ctx.closePath();
+      }
+    }
+  }, [canvasRef]);
 
   useEffect(() => {
     const { current } = canvasRef;
     if (!!current) {
+      current.addEventListener("mousedown", () => setIsDraw(true));
       current.addEventListener("mouseup", () => setIsDraw(false));
-      return current.removeEventListener("mouseup", () => setIsDraw(false));
-    }
+      current.addEventListener("mousemove", handleOnMouseover);
 
-  }, []);
-
-
-  useEffect(() => {
-    const { current } = canvasRef;
-    if (current) {
-      current.addEventListener("mouseover", handleOnMouseover);
-      return () => current.removeEventListener("mouseover", handleOnMouseover);
-    }
+      return () => {
+        current.removeEventListener("mousedown", () => setIsDraw(true));
+        current.removeEventListener("mouseup", () => setIsDraw(false));
+        current.removeEventListener("mousemove", handleOnMouseover)
+      };
+    };
   }, [isDraw]);
 
   const handleOnWheel = useCallback((e: WheelEvent) => {
     if (e.deltaY > 0) {
-      setRatio(ratio - 0.02);
+      setRatio(ratio - 0.003);
     }
 
     if (e.deltaY < 0) {
-      setRatio(ratio + 0.02);
+      setRatio(ratio + 0.003);
     }
   }, [ratio]);
 
   useEffect(() => {
-    // const { current } = canvasCRef;
-    // current?.addEventListener("wheel", handleOnWheel);
-    // return () => current?.removeEventListener("wheel", handleOnWheel);
+    const { current } = canvasRef;
+    if (!!current) {
+      current?.addEventListener("wheel", handleOnWheel);
+      return () => current?.removeEventListener("wheel", handleOnWheel);
+    }
   }, [ratio]);
 
   return (
@@ -175,13 +189,13 @@ const CreatorPage: React.FC<IProps> = (props) => {
       <div className="wrap-tools">
 
       </div>
-      <div
-        className="wrap-canvas"
-      >
-        <canvas
+      <div className="wrap-canvas" >
+        <StyledCanvas
           ref={canvasRef as RefObject<HTMLCanvasElement>}
           width={width}
           height={height}
+          ratio={ratio}
+          coord={coord}
         />
       </div>
     </StyledCreatorPage>
