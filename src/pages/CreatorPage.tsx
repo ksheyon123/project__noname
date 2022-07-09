@@ -1,7 +1,8 @@
-import React, { useRef, RefObject, useEffect, useState, useCallback, MouseEvent } from "react";
+import React, { useRef, RefObject, useEffect, useState, useCallback } from "react";
 import styled from "styled-components";
-import { Input } from "src/components/index";
-import { useMountEffect } from "src/hooks/useMountEffect";
+import Draggable from "react-draggable";
+import { useMountEffect, usePrevious } from "src/hooks/index";
+import ic_arrow from "src/assets/arrow-pointer-solid.svg";
 
 interface IProps {
   width?: number;
@@ -19,8 +20,14 @@ const StyledCreatorPage = styled.div`
     width : 100%;
     height : 30px;
     border-bottom : 1px solid #EEE;
+    & > img {
+      width : 20px;
+      height  : 20px;
+      cursor : pointer;
+    }
     & > div {
       display: flex;
+      
     }
   }
   & > div.wrap-canvas {
@@ -28,6 +35,8 @@ const StyledCreatorPage = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
+    width : 100vw;
+    height : 100vh;
     margin-top : 30px;
     overflow: hidden;
   }
@@ -36,11 +45,8 @@ const StyledCreatorPage = styled.div`
   }
 `;
 
-const StyledCanvas = styled.canvas<{ width: number; height: number; ratio: number; coord: any; }>`
-  transform: scale(${props => props.ratio});
-  /* transform-origin: ${props => `
-    ${props.coord.coordX / props.width * 100}% ${props.coord.coordY / props.height * 100}% 
-  `}; */
+const StyledCanvas = styled.canvas<{ ratio: number; }>`
+    transform: scale(${props => props.ratio});
 `;
 
 const CreatorPage: React.FC<IProps> = (props) => {
@@ -52,12 +58,17 @@ const CreatorPage: React.FC<IProps> = (props) => {
   const size = 10;
   const divRef = useRef<HTMLDivElement>();
   const canvasRef = useRef<HTMLCanvasElement>();
-  const [isDraw, setIsDraw] = useState<boolean>(false);
+  const [isDrag, setDrag] = useState<boolean>(false);
+  const [isKeyDown, setIsKeyDown] = useState<boolean>(false);
   const [ratio, setRatio] = useState<number>(1);
   const [coord, setCoord] = useState<any>({
     coordX: 0,
     coordY: 0
-  })
+  });
+  const [moveTo, setMoveTo] = useState<any>({
+    moveToX: 0,
+    moveToY: 0,
+  });
 
   let gridData = new Object();
 
@@ -113,19 +124,19 @@ const CreatorPage: React.FC<IProps> = (props) => {
     }
   }, [canvasRef]);
 
-  const handleOnMouseover = useCallback((e: any) => {
-    if (!isDraw) return;
+  const handleOnMouseMove = useCallback((e: any) => {
     const { coordX, coordY } = getCurrentPosition(e);
     setCoord({
       coordX,
       coordY
-    })
+    });
+    if (isDrag) return;
+    if (!isKeyDown) return;
     const blockCount = width / size;
     const xIdx = Math.floor((coordX / ratio) / size);
     const yIdx = Math.floor((coordY / ratio) / size);
     setColor(xIdx, yIdx);
     const idx = xIdx + (yIdx * blockCount);
-    console.log(idx);
     gridData = {
       ...gridData,
       [idx]: {
@@ -135,13 +146,12 @@ const CreatorPage: React.FC<IProps> = (props) => {
         h: 0.01,
       }
     }
-  }, [isDraw, ratio]);
+  }, [isDrag, isKeyDown, ratio, moveTo]);
 
   const setColor = useCallback((x: number, y: number) => {
     const { current } = canvasRef;
     if (!!current) {
       const ctx = current.getContext("2d");
-      console.log(x * size, y * size);
       if (!!ctx) {
         ctx.beginPath();
         ctx.fillStyle = "rgb(100, 100, 100)";
@@ -154,17 +164,17 @@ const CreatorPage: React.FC<IProps> = (props) => {
   useEffect(() => {
     const { current } = canvasRef;
     if (!!current) {
-      current.addEventListener("mousedown", () => setIsDraw(true));
-      current.addEventListener("mouseup", () => setIsDraw(false));
-      current.addEventListener("mousemove", handleOnMouseover);
+      current.addEventListener("mousedown", () => setIsKeyDown(true));
+      current.addEventListener("mouseup", () => setIsKeyDown(false));
+      current.addEventListener("mousemove", handleOnMouseMove);
 
       return () => {
-        current.removeEventListener("mousedown", () => setIsDraw(true));
-        current.removeEventListener("mouseup", () => setIsDraw(false));
-        current.removeEventListener("mousemove", handleOnMouseover)
+        current.removeEventListener("mousedown", () => setIsKeyDown(true));
+        current.removeEventListener("mouseup", () => setIsKeyDown(false));
+        current.removeEventListener("mousemove", handleOnMouseMove)
       };
     };
-  }, [isDraw]);
+  }, [isKeyDown]);
 
   const handleOnWheel = useCallback((e: WheelEvent) => {
     if (e.deltaY > 0) {
@@ -185,18 +195,32 @@ const CreatorPage: React.FC<IProps> = (props) => {
   }, [ratio]);
 
   return (
-    <StyledCreatorPage ref={divRef as RefObject<HTMLDivElement>}>
+    <StyledCreatorPage ref={divRef as RefObject<HTMLDivElement>} >
       <div className="wrap-tools">
-
+        <img
+          src={ic_arrow}
+          onClick={() => setDrag(!isDrag)}
+          alt="arrow"
+        />
+        <div>
+        </div>
       </div>
       <div className="wrap-canvas" >
-        <StyledCanvas
-          ref={canvasRef as RefObject<HTMLCanvasElement>}
-          width={width}
-          height={height}
-          ratio={ratio}
-          coord={coord}
-        />
+        <Draggable
+          disabled={!isDrag}
+          onDrag={(e, data) => {
+            setMoveTo(data)
+          }}
+        >
+          <div>
+            <StyledCanvas
+              ref={canvasRef as RefObject<HTMLCanvasElement>}
+              width={width}
+              height={height}
+              ratio={ratio}
+            />
+          </div>
+        </Draggable>
       </div>
     </StyledCreatorPage>
   )
