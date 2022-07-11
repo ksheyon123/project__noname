@@ -61,14 +61,6 @@ const CreatorPage: React.FC<IProps> = (props) => {
   const [isDrag, setDrag] = useState<boolean>(false);
   const [isKeyDown, setIsKeyDown] = useState<boolean>(false);
   const [ratio, setRatio] = useState<number>(1);
-  const [coord, setCoord] = useState<any>({
-    coordX: 0,
-    coordY: 0
-  });
-  const [moveTo, setMoveTo] = useState<any>({
-    moveToX: 0,
-    moveToY: 0,
-  });
 
   let gridData = new Object();
 
@@ -126,10 +118,6 @@ const CreatorPage: React.FC<IProps> = (props) => {
 
   const handleOnMouseMove = useCallback((e: any) => {
     const { coordX, coordY } = getCurrentPosition(e);
-    setCoord({
-      coordX,
-      coordY
-    });
     if (isDrag) return;
     if (!isKeyDown) return;
     const blockCount = width / size;
@@ -146,7 +134,7 @@ const CreatorPage: React.FC<IProps> = (props) => {
         h: 0.01,
       }
     }
-  }, [isDrag, isKeyDown, ratio, moveTo]);
+  }, [isDrag, isKeyDown, ratio]);
 
   const setColor = useCallback((x: number, y: number) => {
     const { current } = canvasRef;
@@ -206,12 +194,7 @@ const CreatorPage: React.FC<IProps> = (props) => {
         </div>
       </div>
       <div className="wrap-canvas" >
-        <Draggable
-          disabled={!isDrag}
-          onDrag={(e, data) => {
-            setMoveTo(data)
-          }}
-        >
+        <Draggable disabled={!isDrag} >
           <div>
             <StyledCanvas
               ref={canvasRef as RefObject<HTMLCanvasElement>}
