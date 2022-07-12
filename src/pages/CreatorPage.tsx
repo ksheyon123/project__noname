@@ -1,7 +1,10 @@
 import React, { useRef, RefObject, useEffect, useState, useCallback } from "react";
 import styled from "styled-components";
 import Draggable from "react-draggable";
-import { useMountEffect, usePrevious } from "src/hooks/index";
+import { useRecoilValue } from "recoil";
+import { rgbColorState } from "src/states/atom";
+import { useMountEffect } from "src/hooks/index";
+import { Palette } from "src/components/index";
 import ic_arrow from "src/assets/arrow-pointer-solid.svg";
 
 interface IProps {
@@ -20,6 +23,7 @@ const StyledCreatorPage = styled.div`
     width : 100%;
     height : 30px;
     border-bottom : 1px solid #EEE;
+    z-index: 9999;
     & > img {
       width : 20px;
       height  : 20px;
@@ -39,6 +43,7 @@ const StyledCreatorPage = styled.div`
     height : 100vh;
     margin-top : 30px;
     overflow: hidden;
+    z-index: 100;
   }
   .pixel {
     border : 0.5px solid rgba(0, 0, 0, 0.1);
@@ -58,6 +63,9 @@ const CreatorPage: React.FC<IProps> = (props) => {
   const size = 10;
   const divRef = useRef<HTMLDivElement>();
   const canvasRef = useRef<HTMLCanvasElement>();
+
+  const { r, g, b } = useRecoilValue(rgbColorState);
+
   const [isDrag, setDrag] = useState<boolean>(false);
   const [isKeyDown, setIsKeyDown] = useState<boolean>(false);
   const [ratio, setRatio] = useState<number>(1);
@@ -128,13 +136,13 @@ const CreatorPage: React.FC<IProps> = (props) => {
     gridData = {
       ...gridData,
       [idx]: {
-        r: 0,
-        g: 0,
-        b: 0,
+        r: r,
+        g: g,
+        b: b,
         h: 0.01,
       }
     }
-  }, [isDrag, isKeyDown, ratio]);
+  }, [isDrag, isKeyDown, ratio, r, g, b]);
 
   const setColor = useCallback((x: number, y: number) => {
     const { current } = canvasRef;
@@ -142,12 +150,12 @@ const CreatorPage: React.FC<IProps> = (props) => {
       const ctx = current.getContext("2d");
       if (!!ctx) {
         ctx.beginPath();
-        ctx.fillStyle = "rgb(100, 100, 100)";
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
         ctx.fillRect(x * size, y * size, size, size);
         ctx.closePath();
       }
     }
-  }, [canvasRef]);
+  }, [canvasRef, r, g, b]);
 
   useEffect(() => {
     const { current } = canvasRef;
@@ -191,6 +199,7 @@ const CreatorPage: React.FC<IProps> = (props) => {
           alt="arrow"
         />
         <div>
+          <Palette />
         </div>
       </div>
       <div className="wrap-canvas" >
